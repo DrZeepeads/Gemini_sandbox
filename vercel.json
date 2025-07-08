@@ -12,7 +12,7 @@
     }
   },
   "env": {
-    "GOOGLE_AI_API_KEY": "@google-ai-api-key",
+    "GOOGLE_AI_API_KEY": AIzaSyAU8sTo89cJ_bkQjnpuw44yrQsjl0HMTrc",
     "E2B_API_KEY": "@e2b-api-key",
     "OPENAI_API_KEY": "@openai-api-key",
     "ANTHROPIC_API_KEY": "@anthropic-api-key",
