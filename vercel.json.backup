@@ -1,5 +1,16 @@
 {
+  "version": 2,
   "regions": ["iad1"],
+  "functions": {
+    "app/api/chat/route.ts": {
+      "runtime": "edge",
+      "maxDuration": 30
+    },
+    "app/api/sandbox/route.ts": {
+      "runtime": "edge",
+      "maxDuration": 60
+    }
+  },
   "build": {
     "env": {
       "ENABLE_EXPERIMENTAL_COREPACK": "1"

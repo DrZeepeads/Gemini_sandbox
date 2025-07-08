@@ -4,6 +4,10 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { executeSandboxCommand, createSandbox, listSandboxes } from '@/lib/sandbox';
 import { RATE_LIMITS } from '@/config/aiConfig';
 
+// Configure edge runtime
+export const runtime = 'edge';
+export const maxDuration = 60;
+
 // Rate limiter
 const rateLimiter = new RateLimiterMemory({
   points: RATE_LIMITS.max,
