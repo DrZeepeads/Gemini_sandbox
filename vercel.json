@@ -11,13 +11,6 @@
       "maxDuration": 60
     }
   },
-  "env": {
-    "GOOGLE_AI_API_KEY": AIzaSyAU8sTo89cJ_bkQjnpuw44yrQsjl0HMTrc",
-    "E2B_API_KEY": "@e2b-api-key",
-    "OPENAI_API_KEY": "@openai-api-key",
-    "ANTHROPIC_API_KEY": "@anthropic-api-key",
-    "MISTRAL_API_KEY": "@mistral-api-key"
-  },
   "build": {
     "env": {
       "ENABLE_EXPERIMENTAL_COREPACK": "1"
