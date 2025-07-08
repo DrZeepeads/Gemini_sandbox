@@ -233,5 +233,3 @@ function getInstallCommand(packageManager: string, packageName: string): string 
 
   return command;
 }
-
-export const runtime = 'edge';

@@ -153,5 +153,3 @@ async function handleListSandboxes() {
     );
   }
 }
-
-export const runtime = 'edge';
