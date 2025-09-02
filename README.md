@@ -21,7 +21,7 @@ A professional-grade AI chatbot web application built with Next.js 14, featuring
 - **Framework**: Next.js 14 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS + shadcn/ui components
-- **AI SDK**: Vercel AI SDK
+- **AI SDK**: Vercel AI SDK (planned for streaming)
 - **AI Providers**: Google Gemini, OpenAI, Anthropic, Mistral
 - **Sandbox**: E2B SDK for secure code execution
 - **Storage**: IndexedDB via use-local-storage-state
@@ -58,8 +58,8 @@ Before you begin, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/ai-chatbot-pro.git
-cd ai-chatbot-pro
+git clone https://github.com/DrZeepeads/Gemini_sandbox.git
+cd Gemini_sandbox
 ```
 
 ### 2. Install Dependencies
@@ -163,7 +163,7 @@ The app includes pre-configured functions for:
 
 - Rate limiting: 100 requests per 15 minutes per IP
 - Sandbox restrictions: Blocked dangerous commands
-- CORS headers for API security
+- CORS headers for API security (restrict via ALLOWED_ORIGINS)
 - Environment variable validation
 
 ## 🚀 Deployment
