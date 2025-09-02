@@ -7,8 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageBubble } from './MessageBubble';
 import { useChatHistory } from '@/hooks/useChatHistory';
+import { useKnowledgeBase } from '@/hooks/useKnowledgeBase';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
 
 export function Chat() {
   const [input, setInput] = useState('');
@@ -17,6 +20,8 @@ export function Chat() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [model, setModel] = useState('gemini-1.5-pro-latest');
+  const [useKB, setUseKB] = useState(false);
+  const [topK, setTopK] = useState<number>(3);
 
   const {
     currentSession,
@@ -24,6 +29,7 @@ export function Chat() {
     updateMessage,
     createSession,
   } = useChatHistory();
+  const kb = useKnowledgeBase();
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -60,13 +66,24 @@ export function Chat() {
       const ac = new AbortController();
       abortRef.current = ac;
 
+      const prior = (currentSession?.messages || []).map(msg => ({ role: msg.role, content: msg.content }));
+      let contextMessage: { role: 'system'; content: string } | null = null;
+      if (useKB && kb.docs.length > 0) {
+        const hits = await kb.search(userMessage, topK);
+        if (hits.length > 0) {
+          const ctx = hits.map((h, i) => `[${i + 1}] ${h.doc.title}: ${h.chunk.text}`).join('\n\n');
+          contextMessage = { role: 'system', content: `Use the following context to answer. Cite with [n] when relevant.\n\n${ctx}` };
+        }
+      }
+
       const response = await fetch('/api/chat?stream=1', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model,
           messages: [
-            ...(currentSession?.messages || []).map(msg => ({ role: msg.role, content: msg.content })),
+            ...prior,
+            ...(contextMessage ? [contextMessage] : []),
             { role: 'user', content: userMessage },
           ],
         }),
@@ -210,17 +227,26 @@ export function Chat() {
               <span>
                 {currentSession?.messages.length || 0} messages in this session
               </span>
-              <div className="flex items-center gap-2">
-                <span>Model:</span>
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger className="h-7 w-[220px]">
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent align="end">
-                    <SelectItem value="gemini-1.5-pro-latest">gemini-1.5-pro-latest</SelectItem>
-                    <SelectItem value="gemini-1.5-flash-latest">gemini-1.5-flash-latest</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span>Model:</span>
+                  <Select value={model} onValueChange={setModel}>
+                    <SelectTrigger className="h-7 w-[220px]">
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent align="end">
+                      <SelectItem value="gemini-1.5-pro-latest">gemini-1.5-pro-latest</SelectItem>
+                      <SelectItem value="gemini-1.5-flash-latest">gemini-1.5-flash-latest</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="use-kb" checked={useKB} onCheckedChange={(v) => setUseKB(Boolean(v))} />
+                  <label htmlFor="use-kb" className="cursor-pointer">Use knowledge</label>
+                  <span className="text-muted-foreground">TopK</span>
+                  <div className="w-32"><Slider value={[topK]} min={1} max={5} step={1} onValueChange={(v) => setTopK(v[0])} /></div>
+                  <span className="w-4 text-right">{topK}</span>
+                </div>
               </div>
             </div>
           </form>
