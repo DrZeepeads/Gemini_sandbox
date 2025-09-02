@@ -5,12 +5,9 @@ import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card } from '@/components/ui/card';
 import { MessageBubble } from './MessageBubble';
-import { TypingIndicator } from './TypingIndicator';
 import { useChatHistory } from '@/hooks/useChatHistory';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 export function Chat() {
   const [input, setInput] = useState('');
@@ -30,7 +27,7 @@ export function Chat() {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        (scrollContainer as HTMLDivElement).scrollTop = (scrollContainer as HTMLDivElement).scrollHeight;
       }
     }
   }, [currentSession?.messages]);
@@ -49,6 +46,8 @@ export function Chat() {
     setInput('');
     setIsLoading(true);
 
+    let assistantMessageId: string | null = null;
+
     try {
       // Create session if none exists
       if (!currentSession) {
@@ -56,13 +55,13 @@ export function Chat() {
       }
 
       // Add user message
-      const userMessageId = addMessage({
+      addMessage({
         role: 'user',
         content: userMessage,
       });
 
       // Add temporary assistant message with typing indicator
-      const assistantMessageId = addMessage({
+      assistantMessageId = addMessage({
         role: 'assistant',
         content: '',
         isTyping: true,
@@ -96,11 +95,13 @@ export function Chat() {
       const data = await response.json();
 
       // Update assistant message with response
-      updateMessage(assistantMessageId, {
-        content: data.message,
-        isTyping: false,
-        functionCalls: data.functionCalls,
-      });
+      if (assistantMessageId) {
+        updateMessage(assistantMessageId, {
+          content: data.message,
+          isTyping: false,
+          functionCalls: data.functionCalls,
+        });
+      }
 
       toast.success('Message sent successfully');
 

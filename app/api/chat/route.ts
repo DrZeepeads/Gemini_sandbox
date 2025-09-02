@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { streamText, generateText, ToolInvocation } from 'ai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
@@ -96,7 +95,7 @@ export async function POST(req: NextRequest) {
 
       // Handle function calls
       if (functionCalls && functionCalls.length > 0) {
-        const functionResults = [];
+        const functionResults = [] as Array<{ name: string; response: any }>;
 
         for (const functionCall of functionCalls) {
           try {
@@ -233,5 +232,3 @@ function getInstallCommand(packageManager: string, packageName: string): string 
 
   return command;
 }
-
-export const runtime = 'edge';
