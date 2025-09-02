@@ -11,6 +11,15 @@ const ExecuteCommandSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const allowed = (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+    const origin = req.headers.get('origin') || '';
+    if (allowed.length > 0 && origin && !allowed.includes(origin)) {
+      return NextResponse.json({ error: 'Origin not allowed' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { command, timeout, template } = ExecuteCommandSchema.parse(body);
 
