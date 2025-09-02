@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { Chat } from '@/components/chat/Chat';
 import { SandboxConsole } from '@/components/chat/SandboxConsole';
+import { KnowledgeManager } from '@/components/knowledge/KnowledgeManager';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Button } from '@/components/ui/button';
-import { Settings, MessageSquare, Terminal } from 'lucide-react';
+import { Settings, MessageSquare, Terminal, BookOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function HomePage() {
@@ -39,7 +40,7 @@ export default function HomePage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <div className="border-b border-border bg-muted/30">
             <div className="container px-4">
-              <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsList className="grid w-full max-w-lg grid-cols-3">
                 <TabsTrigger value="chat" className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
                   Chat
@@ -47,6 +48,10 @@ export default function HomePage() {
                 <TabsTrigger value="sandbox" className="flex items-center gap-2">
                   <Terminal className="h-4 w-4" />
                   Sandbox
+                </TabsTrigger>
+                <TabsTrigger value="knowledge" className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Knowledge
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -58,6 +63,10 @@ export default function HomePage() {
           
           <TabsContent value="sandbox" className="h-full mt-0">
             <SandboxConsole />
+          </TabsContent>
+
+          <TabsContent value="knowledge" className="h-full mt-0">
+            <KnowledgeManager />
           </TabsContent>
         </Tabs>
       </div>
