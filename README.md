@@ -21,7 +21,7 @@ A professional-grade AI chatbot web application built with Next.js 14, featuring
 - **Framework**: Next.js 14 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS + shadcn/ui components
-- **AI SDK**: Vercel AI SDK (planned for streaming)
+- **AI SDK**: Google Generative AI SDK (streaming enabled)
 - **AI Providers**: Google Gemini, OpenAI, Anthropic, Mistral
 - **Sandbox**: E2B SDK for secure code execution
 - **Storage**: IndexedDB via use-local-storage-state
@@ -149,22 +149,23 @@ Edit `config/aiConfig.ts` to customize:
 - Rate limiting settings
 - Sandbox security rules
 
-### Function Calling Setup
+### Function Calling & Code Execution
 
-The app includes pre-configured functions for:
-
-- `execute_command`: Run shell commands safely
-- `create_file`: Create files with content
-- `read_file`: Read file contents
-- `list_directory`: List directory contents
-- `install_package`: Install software packages
+- Chat uses Gemini 1.5 with streaming responses and optional function calling (non-streaming path)
+- Code blocks in AI responses have a "Run" button to execute in the sandbox and display stdout/stderr
+- Pre-configured functions for tool use:
+  - `execute_command`: Run shell commands safely
+  - `create_file`: Create files with content
+  - `read_file`: Read file contents
+  - `list_directory`: List directory contents
+  - `install_package`: Install software packages
 
 ### Security Configuration
 
-- Rate limiting: 100 requests per 15 minutes per IP
+- Rate limiting: 100 requests per 15 minutes per IP (memory store; consider Redis in production)
 - Sandbox restrictions: Blocked dangerous commands
-- CORS headers for API security (restrict via ALLOWED_ORIGINS)
-- Environment variable validation
+- CORS allowlist via `ALLOWED_ORIGINS` env (comma-separated)
+- Environment variables for keys; keys never exposed to client
 
 ## 🚀 Deployment
 
@@ -209,9 +210,9 @@ The app includes pre-configured functions for:
 ### Sandbox Commands
 
 1. Switch to "Sandbox" tab
-2. Enter shell commands (e.g., `ls -la`, `python --version`)
-3. Commands execute in secure isolated environment
-4. View output with syntax highlighting
+2. Toggle "Use real sandbox" to target the E2B runtime (requires `E2B_API_KEY`), or leave off for simulated mode
+3. Enter shell commands (e.g., `ls -la`, `python --version`)
+4. View output with status and copy buttons
 
 ### Function Calling
 
