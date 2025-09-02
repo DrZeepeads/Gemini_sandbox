@@ -5,9 +5,10 @@ import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import { cn } from './utils';
 import { Button } from '@/components/ui/button';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Play } from 'lucide-react';
 import { useState } from 'react';
 import { copyToClipboard } from './utils';
+import { toast } from 'sonner';
 
 // CSS imports for syntax highlighting and math
 import 'highlight.js/styles/github-dark.css';
@@ -26,6 +27,9 @@ interface CodeBlockProps {
 
 function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [runStdout, setRunStdout] = useState<string | null>(null);
+  const [runStderr, setRunStderr] = useState<string | null>(null);
   
   const match = /language-(\w+)/.exec(className || '');
   const language = match ? match[1] : '';
@@ -35,6 +39,50 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
     if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleRun = async () => {
+    if (running) return;
+    setRunning(true);
+    setRunStdout(null);
+    setRunStderr(null);
+
+    try {
+      let cmd = '';
+      const code = children;
+      if (language === 'bash' || language === 'sh' || language === 'zsh') {
+        cmd = String(code);
+      } else if (language === 'python' || language === 'py') {
+        cmd = `python - << 'PY'\n${code}\nPY`;
+      } else if (language === 'javascript' || language === 'js' || language === 'ts' || language === 'typescript') {
+        cmd = `node - << 'JS'\n${code}\nJS`;
+      } else {
+        cmd = String(code);
+      }
+
+      const res = await fetch('/api/sandbox', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      setRunStdout(data.result?.stdout || '');
+      setRunStderr(data.result?.stderr || '');
+      if ((data.result?.exitCode ?? 0) === 0) {
+        toast.success('Code executed');
+      } else {
+        toast.error(`Exit ${data.result?.exitCode}`);
+      }
+    } catch (err) {
+      setRunStdout('');
+      setRunStderr(err instanceof Error ? err.message : 'Unknown error');
+      toast.error('Execution failed');
+    } finally {
+      setRunning(false);
     }
   };
 
@@ -58,18 +106,31 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
         <span className="text-xs font-medium text-muted-foreground">
           {language || 'code'}
         </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCopy}
-          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          {copied ? (
-            <Check className="h-3 w-3 text-green-500" />
-          ) : (
-            <Copy className="h-3 w-3" />
-          )}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRun}
+            className="h-6 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            disabled={running}
+            title="Run in sandbox"
+          >
+            <Play className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopy}
+            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Copy"
+          >
+            {copied ? (
+              <Check className="h-3 w-3 text-green-500" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+          </Button>
+        </div>
       </div>
       <pre
         className={cn(
@@ -79,6 +140,22 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
       >
         <code className="font-mono text-sm">{children}</code>
       </pre>
+      {(runStdout || runStderr) && (
+        <div className="mt-2 text-xs">
+          {runStdout && (
+            <div className="mb-1">
+              <div className="text-green-600 dark:text-green-400 font-medium">Output</div>
+              <pre className="bg-muted/30 p-2 rounded"><code>{runStdout}</code></pre>
+            </div>
+          )}
+          {runStderr && (
+            <div>
+              <div className="text-red-600 dark:text-red-400 font-medium">Error</div>
+              <pre className="bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800"><code className="text-red-800 dark:text-red-200">{runStderr}</code></pre>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
