@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageBubble } from './MessageBubble';
 import { useChatHistory } from '@/hooks/useChatHistory';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function Chat() {
   const [input, setInput] = useState('');
@@ -15,6 +16,7 @@ export function Chat() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const [model, setModel] = useState('gemini-1.5-pro-latest');
 
   const {
     currentSession,
@@ -62,6 +64,7 @@ export function Chat() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          model,
           messages: [
             ...(currentSession?.messages || []).map(msg => ({ role: msg.role, content: msg.content })),
             { role: 'user', content: userMessage },
@@ -207,9 +210,18 @@ export function Chat() {
               <span>
                 {currentSession?.messages.length || 0} messages in this session
               </span>
-              <span>
-                Press Shift+Enter for new line, Enter to send
-              </span>
+              <div className="flex items-center gap-2">
+                <span>Model:</span>
+                <Select value={model} onValueChange={setModel}>
+                  <SelectTrigger className="h-7 w-[220px]">
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    <SelectItem value="gemini-1.5-pro-latest">gemini-1.5-pro-latest</SelectItem>
+                    <SelectItem value="gemini-1.5-flash-latest">gemini-1.5-flash-latest</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </form>
         </div>
