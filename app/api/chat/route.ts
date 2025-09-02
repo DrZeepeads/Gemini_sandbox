@@ -24,6 +24,7 @@ const ChatRequestSchema = z.object({
   model: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().min(1).max(4096).optional(),
+  stream: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -38,9 +39,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const url = new URL(req.url);
+
     // Validate request
     const body = await req.json();
-    const { messages, model, temperature, maxTokens } = ChatRequestSchema.parse(body);
+    const { messages, model, temperature, maxTokens, stream } = ChatRequestSchema.parse(body);
+    const shouldStream = stream || url.searchParams.get('stream') === '1';
 
     // Get AI configuration
     const config = getCurrentConfig();
@@ -78,12 +82,41 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (shouldStream) {
+      const result = await geminiModel.generateContentStream({
+        contents: geminiMessages,
+      });
+
+      const encoder = new TextEncoder();
+
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          try {
+            for await (const chunk of result.stream) {
+              const text = chunk.text() || '';
+              if (text) controller.enqueue(encoder.encode(text));
+            }
+            controller.close();
+          } catch (err) {
+            controller.error(err);
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache',
+        },
+      });
+    }
+
     // Function calling tools
     const tools = config.enableFunctionCalling ? [{
       functionDeclarations: FUNCTION_DEFINITIONS,
     }] : undefined;
 
-    // Generate response with function calling
+    // Generate response with function calling (non-streaming)
     if (config.enableFunctionCalling) {
       const result = await geminiModel.generateContent({
         contents: geminiMessages,
