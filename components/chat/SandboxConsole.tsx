@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { formatExecutionTime, formatTimestamp, copyToClipboard } from '@/lib/utils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ export function SandboxConsole() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
+  const [useRealSandbox, setUseRealSandbox] = useState(false);
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -81,7 +83,8 @@ export function SandboxConsole() {
     try {
       const startTime = Date.now();
       
-      const response = await fetch('/api/sandbox', {
+      const endpoint = useRealSandbox ? '/api/sandbox-real' : '/api/sandbox';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -202,27 +205,33 @@ export function SandboxConsole() {
           </Badge>
         </div>
         
-        <div className="flex items-center gap-2">
-          {isRunning && (
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Checkbox id="real-sandbox" checked={useRealSandbox} onCheckedChange={(v) => setUseRealSandbox(Boolean(v))} />
+            <label htmlFor="real-sandbox" className="text-sm text-muted-foreground">Use real sandbox</label>
+          </div>
+          <div className="flex items-center gap-2">
+            {isRunning && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={stopExecution}
+                disabled={!isRunning}
+              >
+                <Square className="h-4 w-4 mr-1" />
+                Stop
+              </Button>
+            )}
             <Button
-              variant="destructive"
+              variant="ghost"
               size="sm"
-              onClick={stopExecution}
-              disabled={!isRunning}
+              onClick={clearHistory}
+              disabled={history.length === 0}
             >
-              <Square className="h-4 w-4 mr-1" />
-              Stop
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearHistory}
-            disabled={history.length === 0}
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Clear
-          </Button>
+          </div>
         </div>
       </div>
 
